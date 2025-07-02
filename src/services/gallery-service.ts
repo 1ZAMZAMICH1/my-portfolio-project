@@ -1,7 +1,7 @@
 import { GalleryImage } from "../types/gallery";
 
 // Единый адрес нашего нового API на Netlify
-const API_URL = '/api/';
+const API_URL = 'https://zamzamich.netlify.app/.netlify/functions/api';
 
 /**
  * Внутренняя функция для получения ВСЕХ данных из нашей базы (Gist).
