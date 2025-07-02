@@ -1,6 +1,6 @@
 import { GalleryImage } from "../types/gallery";
 
-const API_URL = '/api/';
+const API_URL = 'https://zamzamich.netlify.app/.netlify/functions/api';
 
 const getAllData = async () => {
   try {

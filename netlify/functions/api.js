@@ -1,29 +1,28 @@
+// ПОЛНЫЙ КОД для netlify/functions/api.js
+
 export async function handler(event, context) {
   
   const { GIST_ID, GITHUB_TOKEN, GIST_FILENAME } = process.env;
   const GIST_URL = `https://api.github.com/gists/${GIST_ID}`;
-  
+
   // Заголовки, которые мы будем отправлять в ответе
   const responseHeaders = { 
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*' // Разрешаем CORS
+    'Access-Control-Allow-Origin': '*', // Разрешаем CORS для всех
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   };
 
-  // Обработка preflight-запроса от браузера
+  // Обработка preflight-запроса от браузера для POST
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204, // No Content
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      }
+      headers: responseHeaders
     };
   }
 
   // --- ЧТЕНИЕ ДАННЫХ (GET) ---
   if (event.httpMethod === 'GET') {
-    // ... (код для GET остается без изменений) ...
     try {
       const response = await fetch(GIST_URL);
       if (!response.ok) throw new Error(`Gist read error: ${response.status}`);
@@ -38,7 +37,6 @@ export async function handler(event, context) {
 
   // --- ЗАПИСЬ ДАННЫХ (POST) ---
   if (event.httpMethod === 'POST') {
-    // ... (код для POST остается без изменений) ...
     try {
       const GITHUB_HEADERS = {
         'Accept': 'application/vnd.github+json',
@@ -50,7 +48,10 @@ export async function handler(event, context) {
         headers: GITHUB_HEADERS,
         body: JSON.stringify(body)
       });
-      if (!response.ok) throw new Error(`Gist write error: ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gist write error: ${response.status}. Body: ${errorText}`);
+      }
       return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ message: 'Database updated!' }) };
     } catch (error) {
       return { statusCode: 500, headers: responseHeaders, body: JSON.stringify({ error: error.message }) };
