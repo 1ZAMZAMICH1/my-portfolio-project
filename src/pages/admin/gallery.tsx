@@ -2,48 +2,45 @@ import React from "react";
 import { Card, CardBody, Button, Input, Spinner, addToast } from "@heroui/react";
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
-// import { works } from "../../data/works"; // Это больше не нужно для инициализации, если используем localStorage
+// --- ИМПОРТИРУЕМ НАШИ ПРАВИЛЬНЫЕ ФУНКЦИИ ---
+import { getGalleryImages, addGalleryImage, deleteGalleryImage } from "../../services/gallery-service";
+import { GalleryImage } from "../../types/gallery";
 
-interface GalleryImage {
-  id: string;
-  imageUrl: string;
-  title: string;
-}
-
-// Ключ для localStorage для галереи
-const GALLERY_STORAGE_KEY = "portfolio_gallery_images";
-
-// Инициализация галереи из localStorage или пустой массив
-const getInitialGalleryImages = (): GalleryImage[] => {
-  const savedImages = localStorage.getItem(GALLERY_STORAGE_KEY);
-  return savedImages ? JSON.parse(savedImages) : [];
-};
+// ВСЕ, ЧТО СВЯЗАНО С LOCALSTORAGE, УДАЛЯЕМ.
 
 const AdminGalleryPage: React.FC = () => {
   const [images, setImages] = React.useState<GalleryImage[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [uploading, setUploading] = React.useState(false);
   const [newImageTitle, setNewImageTitle] = React.useState("");
-  const [newImageUrl, setNewImageUrl] = React.useState(""); // <-- НОВОЕ: состояние для URL изображения
-  // const fileInputRef = React.useRef<HTMLInputElement>(null); // ЭТО БОЛЬШЕ НЕ НУЖНО
-  // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => { /* ЭТО БОЛЬШЕ НЕ НУЖНО */ };
+  const [newImageUrl, setNewImageUrl] = React.useState("");
 
-  React.useEffect(() => {
-    // Загружаем данные из localStorage
+  // Функция для загрузки данных с нашего API
+  const fetchImages = async () => {
     setLoading(true);
-    setTimeout(() => { // Имитация задержки
-      setImages(getInitialGalleryImages());
+    try {
+      const fetchedImages = await getGalleryImages();
+      setImages(fetchedImages);
+    } catch (error) {
+      addToast({
+        title: "Ошибка загрузки",
+        description: "Не удалось загрузить изображения из базы данных.",
+        color: "danger",
+      });
+      console.error(error);
+    } finally {
       setLoading(false);
-    }, 500); 
-  }, []);
-  
-  // Функция для сохранения изображений в localStorage
-  const saveImagesToLocalStorage = (currentImages: GalleryImage[]) => {
-    localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(currentImages));
+    }
   };
 
-  const handleAddImage = () => { // Изменил название функции
-    if (!newImageTitle.trim() || !newImageUrl.trim()) { // Проверяем URL
+  // Загружаем данные при первом рендере страницы
+  React.useEffect(() => {
+    fetchImages();
+  }, []);
+
+  // Обработчик добавления изображения
+  const handleAddImage = async () => {
+    if (!newImageTitle.trim() || !newImageUrl.trim()) {
       addToast({
         title: "Ошибка",
         description: "Пожалуйста, введите название и URL изображения",
@@ -54,38 +51,55 @@ const AdminGalleryPage: React.FC = () => {
 
     setUploading(true);
 
-    // Имитация загрузки и сохранения (без реальной загрузки файла)
-    setTimeout(() => {
-      const newImage: GalleryImage = {
-        id: `img-${Date.now()}`,
-        imageUrl: newImageUrl.trim(), // Используем введенный URL
-        title: newImageTitle.trim(),
-      };
+    const newImage: Omit<GalleryImage, 'id'> = {
+      imageUrl: newImageUrl.trim(),
+      title: newImageTitle.trim(),
+    };
 
-      const updatedImages = [...images, newImage];
-      setImages(updatedImages);
-      saveImagesToLocalStorage(updatedImages); // Сохраняем в localStorage
+    try {
+      // Вызываем нашу новую функцию для добавления
+      await addGalleryImage(newImage);
       
-      setNewImageTitle("");
-      setNewImageUrl(""); // Очищаем поле URL
-      setUploading(false);
       addToast({
         title: "Изображение добавлено",
         description: "Изображение успешно добавлено в галерею",
         color: "success",
       });
-    }, 1000); // Имитация задержки
+
+      // Очищаем поля и перезагружаем список
+      setNewImageTitle("");
+      setNewImageUrl("");
+      fetchImages(); // Перезагружаем список, чтобы увидеть новую картинку
+    } catch (error) {
+      addToast({
+        title: "Ошибка сохранения",
+        description: "Не удалось сохранить изображение.",
+        color: "danger",
+      });
+      console.error(error);
+    } finally {
+      setUploading(false);
+    }
   };
   
-  const handleDeleteImage = (id: string) => {
-    const updatedImages = images.filter((image) => image.id !== id);
-    setImages(updatedImages);
-    saveImagesToLocalStorage(updatedImages); // Сохраняем изменения в localStorage
-    addToast({
-      title: "Изображение удалено",
-      description: "Изображение успешно удалено из галереи",
-      color: "warning",
-    });
+  // Обработчик удаления изображения
+  const handleDeleteImage = async (id: string) => {
+    try {
+      await deleteGalleryImage(id);
+      addToast({
+        title: "Изображение удалено",
+        description: "Изображение успешно удалено из галереи",
+        color: "warning",
+      });
+      fetchImages(); // Перезагружаем список
+    } catch (error) {
+      addToast({
+        title: "Ошибка удаления",
+        description: "Не удалось удалить изображение.",
+        color: "danger",
+      });
+      console.error(error);
+    }
   };
 
   return (
@@ -112,9 +126,9 @@ const AdminGalleryPage: React.FC = () => {
               className="flex-grow"
               isRequired
             />
-            <Input // <-- НОВОЕ: Поле для ввода URL
+            <Input
               label="URL изображения"
-              placeholder="https://i.imgur.com/your-image.jpg" // Пример с Imgur
+              placeholder="https://.../your-image.jpg"
               value={newImageUrl}
               onValueChange={setNewImageUrl}
               variant="bordered"
@@ -122,26 +136,9 @@ const AdminGalleryPage: React.FC = () => {
               isRequired
               startContent={<Icon icon="lucide:link" className="text-foreground/50" />}
             />
-            {/* УБРАТЬ ЭТОТ БЛОК КОДА: */}
-            {/* <input 
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleImageUpload}
-              accept="image/*"
-            />
-            <Button
-              color="default"
-              variant="flat"
-              onPress={() => fileInputRef.current?.click()}
-              startContent={<Icon icon="lucide:upload" />}
-            >
-              Выбрать файл
-            </Button> */}
-            {/* /УБРАТЬ ЭТОТ БЛОК КОДА */}
             <Button
               color="primary"
-              onPress={handleAddImage} 
+              onPress={handleAddImage}
               isLoading={uploading}
               startContent={!uploading && <Icon icon="lucide:plus" />}
             >

@@ -23,6 +23,11 @@ const GallerySection: React.FC = () => {
       setLoading(true);
       try {
         const images = await getGalleryImages();
+        
+        // --- ОТЛАДОЧНЫЙ ЛОГ: СМОТРИМ, ЧТО ПРИШЛО С БЭКЕНДА ---
+        console.log("ПОЛУЧЕНО ДАННЫХ ДЛЯ ГАЛЕРЕИ:", images);
+        // ---------------------------------------------------------
+
         setAllImages(images); 
       } catch (error) {
         console.error("Ошибка при загрузке изображений галереи на главной странице:", error);
@@ -35,23 +40,17 @@ const GallerySection: React.FC = () => {
   }, []);
 
   // Эффект для измерения высоты контента после загрузки изображений и рендеринга
-  // Это самый критичный момент для точности
   React.useEffect(() => {
     if (allImages.length > 0 && col1Ref.current && col2Ref.current && col3Ref.current) {
-      // Увеличена задержка для МАКСИМАЛЬНОЙ уверенности, что все изображения загрузились и отрисовались
       const timer = setTimeout(() => {
-        setColHeights({
+        const heights = {
           col1: col1Ref.current?.scrollHeight || 0,
           col2: col2Ref.current?.scrollHeight || 0,
           col3: col3Ref.current?.scrollHeight || 0,
-        });
-        // Console log для дебага: посмотри эти значения в консоли
-        console.log("Вычисленные высоты колонок (после 1с задержки):", {
-          col1: col1Ref.current?.scrollHeight,
-          col2: col2Ref.current?.scrollHeight,
-          col3: col3Ref.current?.scrollHeight,
-        });
-      }, 1000); // 1 СЕКУНДА задержки
+        };
+        setColHeights(heights);
+        console.log("Вычисленные высоты колонок (для анимации):", heights);
+      }, 1000); 
 
       return () => clearTimeout(timer);
     }
@@ -71,8 +70,6 @@ const GallerySection: React.FC = () => {
   // Варианты анимации для каждой колонки
   const scrollAnimationVariants = (height: number, reverse: boolean) => {
     if (height === 0) return {};
-
-    // Теперь дублируем контент 5 раз, поэтому делим на 5
     const scrollDistance = height / 5; 
 
     return {
@@ -81,11 +78,10 @@ const GallerySection: React.FC = () => {
         y: reverse ? [0, scrollDistance] : [0, -scrollDistance], 
         transition: {
           y: {
-            duration: 20, // УВЕЛИЧЕНА ДЛИТЕЛЬНОСТЬ: 90 секунд за один цикл. Это очень медленно!
+            duration: 20,
             ease: "linear",
             repeat: Infinity,
             repeatType: "loop",
-            repeatDelay: 0,
           },
         },
       },
@@ -129,28 +125,26 @@ const GallerySection: React.FC = () => {
                 animate="animate"
                 className="flex flex-col gap-4"
               >
-                {/* Дублируем контент ПЯТЬ раз для максимальной надежности */}
                 {[...column1, ...column1, ...column1, ...column1, ...column1].map((image, idx) => ( 
                   <div 
-                    key={`col1-${image.id}-${idx}`} // Уникальный ключ для дублированных элементов
+                    key={`col1-${image.id}-${idx}`}
                     className="relative overflow-hidden group rounded-lg"
                   >
                     <img 
                       src={image.imageUrl} 
                       alt={image.title} 
-                      className="w-full h-auto block" // Сохраняем исходные пропорции
+                      className="w-full h-auto block"
                     />
-                   
                   </div>
                 ))}
               </motion.div>
             </div>
             
-            {/* Вторая колонка (проблемная) */}
+            {/* Вторая колонка */}
             <div className="overflow-hidden h-[600px] flex flex-col">
               <motion.div 
                 ref={col2Ref}
-                variants={scrollAnimationVariants(colHeights.col2, false)} // Обратный скролл
+                variants={scrollAnimationVariants(colHeights.col2, false)}
                 animate="animate"
                 className="flex flex-col gap-4"
               >
@@ -162,9 +156,8 @@ const GallerySection: React.FC = () => {
                     <img 
                       src={image.imageUrl} 
                       alt={image.title} 
-                      className="w-full h-auto block" // Сохраняем исходные пропорции
+                      className="w-full h-auto block"
                     />
-                    
                   </div>
                 ))}
               </motion.div>
@@ -186,9 +179,8 @@ const GallerySection: React.FC = () => {
                     <img 
                       src={image.imageUrl} 
                       alt={image.title} 
-                      className="w-full h-auto block" // Сохраняем исходные пропорции
+                      className="w-full h-auto block"
                     />
-                   
                   </div>
                 ))}
               </motion.div>

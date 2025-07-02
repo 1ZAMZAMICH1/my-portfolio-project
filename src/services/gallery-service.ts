@@ -1,11 +1,7 @@
 import { GalleryImage } from "../types/gallery";
 
-// Единый адрес нашего нового API на Netlify
-const API_URL = 'https://zamzamich.netlify.app/.netlify/functions/api';
+const API_URL = '/api/';
 
-/**
- * Внутренняя функция для получения ВСЕХ данных из нашей базы (Gist).
- */
 const getAllData = async () => {
   try {
     const response = await fetch(API_URL);
@@ -17,9 +13,6 @@ const getAllData = async () => {
   }
 };
 
-/**
- * Внутренняя функция для ЗАПИСИ всех данных в нашу базу (Gist).
- */
 const writeAllData = async (dbObject) => {
   try {
     const response = await fetch(API_URL, {
@@ -38,22 +31,29 @@ const writeAllData = async (dbObject) => {
 // --- Получение всех изображений из галереи ---
 export const getGalleryImages = async (): Promise<GalleryImage[]> => {
   const data = await getAllData();
-  return data.gallery || [];
+  const galleryItems = data.gallery || [];
+
+  // ИСПРАВЛЕНИЕ: Читаем `title` или `description` для совместимости
+  return galleryItems.map((item: any) => ({
+    id: item.id,
+    imageUrl: item.imageUrl,
+    title: item.title || item.description || '' // Берем title, если нет - description, если нет - пустую строку
+  }));
 };
 
 // --- Добавление нового изображения в галерею ---
 export const addGalleryImage = async (image: Omit<GalleryImage, 'id'>): Promise<GalleryImage> => {
-  const db = await getAllData(); // Читаем текущую базу
-  // Преобразуем title в description, как было у тебя
+  const db = await getAllData();
+  
+  // ИСПРАВЛЕНИЕ: Сохраняем поле как `title`, а не `description`
   const newImageData = { 
     imageUrl: image.imageUrl, 
-    description: image.title 
+    title: image.title 
   };
   const newImageWithId = { ...newImageData, id: Date.now().toString() };
-  db.gallery.push(newImageWithId); // Добавляем новое изображение
-  await writeAllData(db); // Перезаписываем всю базу
-  // Возвращаем в формате, который ожидает фронтенд
-  return { id: newImageWithId.id, imageUrl: newImageWithId.imageUrl, title: newImageWithId.description };
+  db.gallery.push(newImageWithId); 
+  await writeAllData(db);
+  return { id: newImageWithId.id, imageUrl: newImageWithId.imageUrl, title: newImageWithId.title };
 };
 
 // --- Удаление изображения из галереи ---
