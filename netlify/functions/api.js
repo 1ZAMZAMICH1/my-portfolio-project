@@ -1,41 +1,75 @@
-const fetch = require('node-fetch');
+// Мы больше не используем require('node-fetch').
+// В современной среде Node.js fetch уже встроен.
 
+// Получаем наши секреты из настроек Netlify
 const { GIST_ID, GITHUB_TOKEN, GIST_FILENAME } = process.env;
+
+// URL для обращения к API GitHub
 const GIST_URL = `https://api.github.com/gists/${GIST_ID}`;
+
+// Заголовки для аутентификации
 const GITHUB_HEADERS = {
   'Accept': 'application/vnd.github+json',
   'Authorization': `token ${GITHUB_TOKEN}`,
   'X-GitHub-Api-Version': '2022-11-28'
 };
 
-exports.handler = async function(event) {
+// Используем современный синтаксис export'а
+export async function handler(event, context) {
+  
+  // Стандартные заголовки для ответа браузеру
   const responseHeaders = { 'Content-Type': 'application/json' };
 
+  // --- ЧТЕНИЕ ДАННЫХ (GET) ---
   if (event.httpMethod === 'GET') {
     try {
       const response = await fetch(GIST_URL);
+      if (!response.ok) throw new Error(`GitHub Gist read error: ${response.status}`);
+      
       const gistData = await response.json();
       const content = gistData.files[GIST_FILENAME].content;
-      return { statusCode: 200, headers: responseHeaders, body: content };
+      
+      return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: content
+      };
     } catch (error) {
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
   }
 
+  // --- ЗАПИСЬ ДАННЫХ (POST) ---
   if (event.httpMethod === 'POST') {
     try {
-      const body = { files: { [GIST_FILENAME]: { content: event.body } } };
+      const body = {
+        files: {
+          [GIST_FILENAME]: {
+            content: event.body
+          }
+        }
+      };
+
       const response = await fetch(GIST_URL, {
         method: 'PATCH',
         headers: GITHUB_HEADERS,
         body: JSON.stringify(body)
       });
-      if (!response.ok) throw new Error(`GitHub API error: ${response.status}`);
-      return { statusCode: 200, headers: responseHeaders, body: JSON.stringify({ message: 'Database updated!' }) };
+      
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`GitHub Gist write error: ${response.status} - ${errorBody}`);
+      }
+      
+      return {
+        statusCode: 200,
+        headers: responseHeaders,
+        body: JSON.stringify({ message: 'Database updated successfully!' })
+      };
     } catch (error) {
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
   }
   
-  return { statusCode: 405, body: "Method Not Allowed" };
+  return { statusCode: 405, body: JSON.stringify({ message: "Method Not Allowed" })};
 };
