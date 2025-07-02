@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dyuywnfy3/image/upload/v1749157242/ZAMZAMICH_LOGO_WHITE_p78cra.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZAMZAMICH</title>
+  </head>
+  <body class="h-full min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heroui-chat-script@0/dist/index.min.js"></script>
+
+    <script>
+      const isAdminPage = window.location.pathname.startsWith('/admin');
+
+      if (!isAdminPage) {
+        // Если это НЕ админ-страница, загружаем скрипт Heroui для редактирования
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/npm/heroui-chat-script@beta/dist/select-and-edit-utils.global.js";
+        document.body.appendChild(script);
+        console.log('HeroUI select-and-edit-utils.global.js loaded for non-admin page.');
+      } else {
+        console.log('HeroUI select-and-edit-utils.global.js BLOCKED for admin page.');
+
+        // Если это АДМИН-СТРАНИЦА, мы будем постоянно удалять проблемные элементы
+        function removeProblematicElementsOnAdmin() {
+          const dataOverlay = document.querySelector('.data-overlay-container');
+          if (dataOverlay) {
+            dataOverlay.remove();
+            console.log('Removed .data-overlay-container on Admin.');
+          }
+
+          const resizableHandle = document.querySelector('.react-resizable-handle');
+          if (resizableHandle) {
+            resizableHandle.remove();
+            console.log('Removed .react-resizable-handle on Admin.');
+          }
+
+          // Продолжаем попытки удаления каждый кадр
+          requestAnimationFrame(removeProblematicElementsOnAdmin);
+        }
+
+        // Запускаем удаление сразу после определения, что мы на админ-странице
+        // и пусть это будет работать постоянно, пока страница открыта
+        requestAnimationFrame(removeProblematicElementsOnAdmin);
+      }
+    </script>
+    </body>
+</html>
