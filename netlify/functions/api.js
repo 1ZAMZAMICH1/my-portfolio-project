@@ -42,6 +42,15 @@ export async function handler(event, context) {
   // --- ЗАПИСЬ ДАННЫХ (POST) ---
   if (event.httpMethod === 'POST') {
     try {
+      // ----- НАЧАЛО БЛОКА ОТЛАДКИ -----
+      console.log("--- INCOMING POST REQUEST ---");
+      console.log("GIST_ID from environment:", GIST_ID);
+      // ВАЖНО: НИКОГДА НЕ ЛОГИРУЙ ВЕСЬ ТОКЕН! Только его часть для проверки.
+      console.log("GITHUB_TOKEN exists:", GITHUB_TOKEN ? `Yes, starts with ${GITHUB_TOKEN.substring(0, 7)}` : "No, it's missing!");
+      console.log("GIST_FILENAME from environment:", GIST_FILENAME);
+      console.log("Target URL for PATCH:", GIST_URL);
+      // ----- КОНЕЦ БЛОКА ОТЛАДКИ -----
+
       const body = {
         files: {
           [GIST_FILENAME]: {
@@ -58,6 +67,8 @@ export async function handler(event, context) {
       
       if (!response.ok) {
         const errorBody = await response.text();
+        // Логируем ошибку, чтобы увидеть ответ от GitHub
+        console.error("GitHub API Error Response:", errorBody);
         throw new Error(`GitHub Gist write error: ${response.status} - ${errorBody}`);
       }
       
