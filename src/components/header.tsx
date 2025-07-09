@@ -86,7 +86,7 @@ const Header: React.FC = () => {
               alt="Мой логотип" 
               className="w-12 h-12 object-contain" 
             />
-            <span className="font-bold text-xl text-white">ZAMZAMICH</span>
+            <span className="text-2xl text-white font-normal tracking-widest uppercase">ZAMZAMICH</span>
           </Link>
         </motion.div>
       </NavbarBrand>

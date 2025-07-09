@@ -1,7 +1,7 @@
 import { heroui } from "@heroui/react";
+import type { Config } from "tailwindcss"; // Добавляем импорт типа для лучшей автоподсказки
 
-/** @type {import('tailwindcss').Config} */
-export default {
+const config: Config = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -9,6 +9,14 @@ export default {
   ],
   theme: {
     extend: {
+      // --- НАШИ ИЗМЕНЕНИЯ ЗДЕСЬ ---
+      fontFamily: {
+        // Устанавливаем 'Gotham' как основной шрифт для всего сайта.
+        // Класс `font-sans` используется по умолчанию.
+        sans: ['Gotham', 'system-ui', 'sans-serif'],
+      },
+      // --- КОНЕЦ НАШИХ ИЗМЕНЕНИЙ ---
+      
       animation: {
         'gradient': 'gradient 8s linear infinite',
       },
@@ -74,4 +82,6 @@ export default {
       }
     })
   ]
-}
+};
+
+export default config;

@@ -1,3 +1,12 @@
+/* src/index.css */
+
+@font-face {
+  font-family: 'Gotham'; /* Придумываем название для нашего шрифта */
+  src: url('./assets/fonts/Gotham.ttf') format('truetype'); /* Указываем путь к файлу */
+  font-weight: normal;
+  font-style: normal;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
