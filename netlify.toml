@@ -1,0 +1,7 @@
+# Правило для Single Page Application (SPA)
+# Перехватывает все запросы, которые не ведут к существующим файлам,
+# и отдает вместо них главный index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
