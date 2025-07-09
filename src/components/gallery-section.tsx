@@ -115,7 +115,7 @@ const GallerySection: React.FC = () => {
           </div>
         ) : (
           <div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 max-h-[600px] overflow-hidden"
+            className="grid grid-cols-3 md:grid-cols-3 gap-4 md:gap-8 max-h-[600px] overflow-hidden"
           >
             {/* Первая колонка */}
             <div className="overflow-hidden h-[600px] flex flex-col">

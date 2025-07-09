@@ -14,7 +14,7 @@ const HeroSection: React.FC = () => {
       </div>
       
       <div className="container mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="flex flex-col-reverse lg:flex-row lg:grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -49,7 +49,7 @@ const HeroSection: React.FC = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="relative aspect-[3/4] hidden lg:block max-w-md mx-auto"
+            className="relative aspect-[3/4] max-w-md mx-auto"
           >
             <div className="absolute inset-0 border-2 border-red-500/30 translate-x-4 translate-y-4 rounded-3xl" />
             <img 
