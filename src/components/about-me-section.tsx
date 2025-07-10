@@ -33,7 +33,6 @@ const AboutMeSection: React.FC = () => {
               {/* Декоративный элемент */}
               <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-red-500/20 backdrop-blur-md flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-white/70 text-sm">лет опыта</div>
                 </div>
               </div>
             </div>

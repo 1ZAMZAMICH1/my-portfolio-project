@@ -96,7 +96,7 @@ const GallerySection: React.FC = () => {
         y: reverse ? [0, scrollDistance] : [0, -scrollDistance], 
         transition: {
           y: {
-            duration: 90, // Сделаем 90 секунд, как было у тебя
+            duration: 50, // Сделаем 90 секунд, как было у тебя
             ease: "linear",
             repeat: Infinity,
             repeatType: "loop",
