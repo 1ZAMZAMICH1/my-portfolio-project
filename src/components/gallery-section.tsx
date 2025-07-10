@@ -139,7 +139,7 @@ const GallerySection: React.FC = () => {
             
             {/* Вторая колонка с обратным скроллом */}
             <div className="overflow-hidden h-[600px] flex flex-col">
-              <motion.div ref={col2Ref} variants={scrollAnimationVariants(colHeights.col2, true)} animate="animate" className="flex flex-col gap-4">
+              <motion.div ref={col2Ref} variants={scrollAnimationVariants(colHeights.col2, false)} animate="animate" className="flex flex-col gap-4">
                 {duplicatedContent(column2, 2)}
               </motion.div>
             </div>
