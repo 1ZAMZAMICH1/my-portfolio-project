@@ -24,7 +24,7 @@ const AboutMeSection: React.FC = () => {
               {/* Контейнер для фото */}
               <div className="relative z-10 w-full h-full overflow-hidden">
                 <img 
-                  src="https://res.cloudinary.com/dyuywnfy3/image/upload/v1749224379/IMG_2526_upscayl_1x_realesrgan-x4fast_lkgh3a.png" 
+                  src="https://res.cloudinary.com/dyuywnfy3/image/upload/q_auto,f_auto/v1749224379/IMG_2526_upscayl_1x_realesrgan-x4fast_lkgh3a.png" 
                   alt="Фото дизайнера" 
                   className="w-full h-full object-cover"
                 />
@@ -33,7 +33,6 @@ const AboutMeSection: React.FC = () => {
               {/* Декоративный элемент */}
               <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-red-500/20 backdrop-blur-md flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-white/90 font-bold text-4xl">5+</div>
                   <div className="text-white/70 text-sm">лет опыта</div>
                 </div>
               </div>

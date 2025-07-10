@@ -53,12 +53,11 @@ const HeroSection: React.FC = () => {
           >
             <div className="absolute inset-0 border-2 border-red-500/30 translate-x-4 translate-y-4 rounded-3xl" />
             <img 
-              src="https://res.cloudinary.com/dyuywnfy3/image/upload/v1749224203/20250322_210433_nmyzcs.jpg" 
+              src="https://res.cloudinary.com/dyuywnfy3/image/upload/q_auto,f_auto/v1749224203/20250322_210433_nmyzcs.jpg" 
               alt="Портфолио" 
               className="w-full h-full object-cover z-10 relative rounded-3xl"
             />
             <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-red-500 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">2024</span>
             </div>
           </motion.div>
         </div>
