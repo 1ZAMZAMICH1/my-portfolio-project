@@ -1,11 +1,9 @@
-// src/components/work-detail-modal.tsx
-
 import React from "react";
-// Удалили Link из импорта, так как он больше не нужен для открытия изображения
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Chip } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { Work } from "../types/work";
-import ImageLightbox from "./image-lightbox"; // <-- Импортируем новый компонент
+import ImageLightbox from "./image-lightbox"; 
+import { getOptimizedUrl } from "../utils/image-optimizer"; // <-- ШАГ 1: ИМПОРТИРУЕМ
 
 interface WorkDetailModalProps {
   work: Work | null;
@@ -16,22 +14,14 @@ interface WorkDetailModalProps {
 const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose }) => {
   const [activeImage, setActiveImage] = React.useState<string>("");
   const [currentIndex, setCurrentIndex] = React.useState<number>(0);
-
-  // Состояния для ImageLightbox
   const [isLightboxOpen, setIsLightboxOpen] = React.useState(false);
   const [lightboxInitialIndex, setLightboxInitialIndex] = React.useState(0);
 
-  // Все доступные изображения для галереи (включая основное)
   const allImages = React.useMemo(() => {
     if (!work) return [];
-    const images = [work.imageUrl];
-    if (work.additionalImages) {
-      images.push(...work.additionalImages);
-    }
-    return images;
+    return [work.imageUrl, ...(work.additionalImages || [])];
   }, [work]);
 
-  // Сброс активного изображения и индекса при открытии новой работы
   React.useEffect(() => {
     if (work) {
       setActiveImage(work.imageUrl);
@@ -39,7 +29,6 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
     }
   }, [work]);
 
-  // Обновляем activeImage при изменении currentIndex
   React.useEffect(() => {
     if (allImages.length > 0) {
       setActiveImage(allImages[currentIndex]);
@@ -54,10 +43,8 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
     setCurrentIndex((prevIndex) => (prevIndex - 1 + allImages.length) % allImages.length);
   };
 
-  // Функция для открытия лайтбокса
   const openLightbox = () => {
     setIsLightboxOpen(true);
-    // Когда открываем лайтбокс, убедимся, что он показывает текущее активное изображение
     setLightboxInitialIndex(currentIndex); 
   };
 
@@ -68,7 +55,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
   if (!work) return null;
   
   return (
-    <> {/* Используем фрагмент для рендеринга двух модальных окон */}
+    <>
       <Modal 
         isOpen={isOpen} 
         onClose={onClose}
@@ -83,19 +70,18 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
               </ModalHeader>
               <ModalBody className="p-0">
                 <div className="relative">
-                  {/* Теперь при клике на изображение открывается лайтбокс */}
                   <div 
                     onClick={openLightbox} 
                     className="block w-full h-auto cursor-zoom-in"
                   >
                     <img 
-                      src={activeImage} 
+                      src={getOptimizedUrl(activeImage, { width: 1200 })} // <-- ШАГ 2: ОПТИМИЗАЦИЯ ОСНОВНОЙ КАРТИНКИ
                       alt={work.title}
                       className="w-full h-auto object-contain rounded-lg shadow-md"
+                      loading="lazy" // <-- ШАГ 3: ЛЕНИВАЯ ЗАГРУЗКА
                     />
                   </div>
                   
-                  {/* Кнопки пролистывания */}
                   {allImages.length > 1 && (
                     <>
                       <Button 
@@ -119,16 +105,16 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                     </>
                   )}
                   
-                  {/* Галерея миниатюр, если есть дополнительные изображения */}
                   {allImages.length > 1 && (
                     <div className="flex flex-wrap gap-2 p-4 border-t border-white/10 overflow-x-auto justify-center">
                       {allImages.map((image, index) => (
                         <img
                           key={index}
-                          src={image}
+                          src={getOptimizedUrl(image, { width: 200 })} // <-- ШАГ 2: ОПТИМИЗАЦИЯ МИНИАТЮР
                           alt={`${work.title} ${index + 1}`}
                           className={`w-20 h-20 object-cover rounded-md cursor-pointer transition-all duration-200 ${activeImage === image ? 'border-2 border-primary scale-105' : 'border border-transparent'}`}
                           onClick={() => setCurrentIndex(index)}
+                          loading="lazy" // <-- ШАГ 3: ЛЕНИВАЯ ЗАГРУЗКА
                         />
                       ))}
                     </div>
@@ -170,7 +156,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                   
                   {work.link && (
                     <div className="mb-4">
-                      <a // Changed back to <a> tag from Heroui Link, as we are not using HeroUI Link here.
+                      <a 
                         href={work.link} 
                         target="_blank" 
                         rel="noopener noreferrer"
@@ -193,11 +179,11 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
         </ModalContent>
       </Modal>
 
-      {/* Компонент лайтбокса */}
+      {/* Лайтбокс тоже нужно будет адаптировать, если он есть */}
       <ImageLightbox
         isOpen={isLightboxOpen}
         onClose={closeLightbox}
-        images={allImages}
+        images={allImages.map(img => getOptimizedUrl(img, { width: 1920 }))} // <-- ОПТИМИЗАЦИЯ ДЛЯ ЛАЙТБОКСА
         initialIndex={lightboxInitialIndex}
       />
     </>

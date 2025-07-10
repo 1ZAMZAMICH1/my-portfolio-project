@@ -1,11 +1,11 @@
 // src/components/work-card.tsx
 
 import React from "react";
-// Удалили Button из импорта, так как он больше не нужен
 import { Card, CardBody, CardFooter, Chip } from "@heroui/react"; 
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { Work } from "../types/work";
+import { getOptimizedUrl } from '../utils/image-optimizer'; // <-- ШАГ 1: ИМПОРТИРУЕМ НАШУ ФУНКЦИЮ
 
 interface WorkCardProps {
   work: Work;
@@ -22,23 +22,23 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
     >
       <Card 
         className="glass-effect border border-white/10 h-full"
-        // Удаляем isPressable и onPress отсюда, так как Card может не поддерживать их напрямую.
-        // Мы сделаем CardBody кликабельным.
       >
         <CardBody 
-          className="p-0 overflow-hidden cursor-pointer" // Добавляем cursor-pointer для визуальной индикации
-          onClick={() => onView(work)} // <-- Теперь onClick на CardBody гарантирует клик!
+          className="p-0 overflow-hidden cursor-pointer"
+          onClick={() => onView(work)}
         >
           <div className="relative group">
             <img 
-              src={work.imageUrl} 
+              // --- ШАГ 2: ИСПОЛЬЗУЕМ ФУНКЦИЮ И ДОБАВЛЯЕМ АТРИБУТЫ ---
+              src={getOptimizedUrl(work.imageUrl, { width: 800 })} // Просим картинку шириной 800px для превью
               alt={work.title}
-              // Исправлено: h-auto для сохранения пропорций, убрана фиксированная высота h-48
-              className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-105" 
+              className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-105"
+              loading="lazy" // <-- Добавляем ленивую загрузку
+              width="800" // <-- Помогаем браузеру, указывая реальные размеры (если известны)
+              height="600" // <-- Это можно убрать, если пропорции разные
             />
-            {/* Оверлей при наведении - кнопка "Подробнее" удалена из этого div */}
+            {/* ---------------------------------------------------- */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-              {/* Этот div теперь пустой, кнопка "Подробнее" здесь удалена */}
             </div>
           </div>
           <div className="p-4">

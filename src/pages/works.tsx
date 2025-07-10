@@ -24,7 +24,7 @@ const WorksPage: React.FC = () => {
     const loadWorks = async () => {
       setLoading(true);
       try {
-        const categoryWorks = await getWorksByCategory(category as WorkCategory);
+        const categoryWorks = await getWorksByCategory(category as any); // Приведение типа здесь может быть неидеальным, но допустим
         setWorks(categoryWorks);
       } catch (error) {
         console.error("Ошибка при загрузке работ:", error);
