@@ -131,8 +131,10 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                 </div>
 
                 <div className="p-4">
-                  {/* ИСПРАВЛЕНО ЗДЕСЬ */}
-                  <p className="text-foreground/80 text-justify mb-4">{work.description || work.fullDescription}</p>
+                  {/* ИСПРАВЛЕНИЕ ЗДЕСЬ: Используем `pre-wrap`, чтобы сохранить переносы строк */}
+                   <p className="text-foreground/80 text-justify mb-4 whitespace-pre-wrap">
+                     {work.description || work.fullDescription}
+                   </p>
 
                   {work.tags && work.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">

@@ -111,3 +111,9 @@
     transform: scale(0.8);
   }
 }
+
+/* src/index.css */
+
+.preserve-whitespace {
+  white-space: pre-wrap;
+}
