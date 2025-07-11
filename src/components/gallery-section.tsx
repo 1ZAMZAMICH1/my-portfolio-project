@@ -7,11 +7,11 @@ import { getGalleryImages } from "../services/gallery-service";
 import { GalleryImage } from "../types/gallery"; 
 import { getOptimizedUrl } from "../utils/image-optimizer";
 
-// Компонент для одной колонки, чтобы не дублировать JSX
-const GalleryColumn: React.FC<{ images: GalleryImage[], animationClass: string, colNum: number }> = ({ images, animationClass, colNum }) => (
-  <div className="flex flex-col gap-4 py-2">
-    {images.map((image, idx) => (
-      <div key={`col${colNum}-${image.id}-${idx}`} className="rounded-lg overflow-hidden shadow-lg">
+// Компонент для одной колонки
+const GalleryColumn: React.FC<{ images: GalleryImage[] }> = ({ images }) => (
+  <div className="flex flex-col gap-4">
+    {images.map((image) => (
+      <div key={image.id} className="rounded-lg overflow-hidden shadow-lg">
         <img 
           src={getOptimizedUrl(image.imageUrl, { width: 600 })} 
           alt={image.title} 
@@ -28,18 +28,10 @@ const GallerySection: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadImages = async () => {
-      setLoading(true);
-      try {
-        const images = await getGalleryImages();
-        setAllImages(images); 
-      } catch (error) {
-        console.error("Ошибка при загрузке изображений галереи:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadImages();
+    getGalleryImages()
+      .then(setAllImages)
+      .catch(err => console.error("Ошибка загрузки галереи:", err))
+      .finally(() => setLoading(false));
   }, []);
 
   const [column1, column2, column3] = useMemo(() => {
@@ -50,34 +42,32 @@ const GallerySection: React.FC = () => {
     return cols;
   }, [allImages]);
 
+  // Обертка для анимированной колонки
+  const AnimatedColumn: React.FC<{ images: GalleryImage[], animationClass: string }> = ({ images, animationClass }) => (
+    <div className={`flex flex-col ${animationClass} will-change-transform`}>
+      {/* Рендерим контент ДВАЖДЫ для бесшовного цикла */}
+      <GalleryColumn images={images} />
+      <GalleryColumn images={images} />
+    </div>
+  );
+
   return (
-    <section id="gallery" className="py-20 relative overflow-hidden">
+    <section id="gallery" className="py-20 relative">
       <div className="container mx-auto px-4">
         {/* ... твой заголовок ... */}
         
         {loading ? (
-          <div className="flex justify-center items-center py-20"><Spinner size="lg" /></div>
+          <div className="flex justify-center items-center h-[600px]"><Spinner size="lg" /></div>
         ) : allImages.length === 0 ? (
           <div className="text-center py-20 text-foreground/70">{/* ... */}</div>
         ) : (
-          <div className="grid grid-cols-3 gap-4 md:gap-8 h-[600px] overflow-hidden">
-            {/* Первая колонка */}
-            <div className="animate-scroll will-change-transform">
-              <GalleryColumn images={column1} animationClass="" colNum={1} />
-              <GalleryColumn images={column1} animationClass="" colNum={1} />
-            </div>
-            
-            {/* Вторая колонка */}
-            <div className="animate-scroll-reverse will-change-transform">
-              <GalleryColumn images={column2} animationClass="" colNum={2} />
-              <GalleryColumn images={column2} animationClass="" colNum={2} />
-            </div>
-            
-            {/* Третья колонка */}
-            <div className="animate-scroll will-change-transform">
-              <GalleryColumn images={column3} animationClass="" colNum={3} />
-              <GalleryColumn images={column3} animationClass="" colNum={3} />
-            </div>
+          <div 
+            className="grid grid-cols-3 gap-4 md:gap-8 h-[600px] overflow-hidden" 
+            style={{ maskImage: 'linear-gradient(to bottom, transparent, black 5%, black 95%, transparent)' }}
+          >
+            <AnimatedColumn images={column1} animationClass="animate-scroll" />
+            <AnimatedColumn images={column2} animationClass="animate-scroll-reverse" />
+            <AnimatedColumn images={column3} animationClass="animate-scroll" />
           </div>
         )}
 
