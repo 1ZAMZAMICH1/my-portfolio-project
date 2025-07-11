@@ -9,29 +9,31 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // --- ИСПРАВЛЕННЫЙ БЛОК ---
       fontFamily: {
-        // Мы НЕ трогаем 'sans', чтобы не менять шрифт всего сайта.
-        // Мы добавляем НОВЫЙ шрифт с именем 'gothic'.
-        gothic: ['Gotham', 'cursive'], // 'OldSchoolGothic' - имя из @font-face
+        gothic: ['Gotham', 'cursive'],
       },
-      // --- КОНЕЦ ИСПРАВЛЕНИЙ ---
-      
-      animation: {
-        'gradient': 'gradient 8s linear infinite',
-      },
+      // --- ДОБАВЛЕН БЛОК ДЛЯ CSS-АНИМАЦИИ ---
       keyframes: {
-        gradient: {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
+        scroll: {
+          '0%': { transform: 'translateY(0)' },
+          '100%': { transform: 'translateY(-50%)' },
+        },
+        scrollReverse: {
+          '0%': { transform: 'translateY(-50%)' },
+          '100%': { transform: 'translateY(0)' },
         },
       },
+      animation: {
+        'gradient': 'gradient 8s linear infinite',
+        'scroll': 'scroll 60s linear infinite',
+        'scroll-reverse': 'scrollReverse 60s linear infinite',
+      },
+      // --- КОНЕЦ БЛОКА ---
     },
   },
   darkMode: "class",
   plugins: [
     heroui({
-      // ...остальные твои настройки HeroUI...
       layout: {
         radius: {
           small: "8px",
@@ -42,7 +44,6 @@ const config: Config = {
       themes: {
         light: {
           colors: {
-            // ...твои цвета...
             background: "#0a0a0a",
             foreground: "#f0f0f0",
             focus: "#e11d48",

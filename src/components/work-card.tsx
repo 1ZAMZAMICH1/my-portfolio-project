@@ -1,11 +1,9 @@
-// src/components/work-card.tsx
-
 import React from "react";
 import { Card, CardBody, CardFooter, Chip } from "@heroui/react"; 
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { Work } from "../types/work";
-import { getOptimizedUrl } from '../utils/image-optimizer'; // <-- ШАГ 1: ИМПОРТИРУЕМ НАШУ ФУНКЦИЮ
+import { getOptimizedUrl } from '../utils/image-optimizer';
 
 interface WorkCardProps {
   work: Work;
@@ -14,32 +12,30 @@ interface WorkCardProps {
 
 const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
   return (
+    // --- ИЗМЕНЕНИЕ ЗДЕСЬ: Добавлен класс `will-change-transform` ---
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5 }}
+      className="will-change-transform" // Этот класс подскажет браузеру, что элемент будет анимироваться
     >
       <Card 
-        className="glass-effect border border-white/10 h-full"
+        className="glass-effect border border-white/10 h-full cursor-pointer" // Добавил cursor-pointer сюда
+        onClick={() => onView(work)}
       >
         <CardBody 
-          className="p-0 overflow-hidden cursor-pointer"
-          onClick={() => onView(work)}
+          className="p-0 overflow-hidden" 
         >
           <div className="relative group">
             <img 
-              // --- ШАГ 2: ИСПОЛЬЗУЕМ ФУНКЦИЮ И ДОБАВЛЯЕМ АТРИБУТЫ ---
-              src={getOptimizedUrl(work.imageUrl, { width: 800 })} // Просим картинку шириной 800px для превью
+              src={getOptimizedUrl(work.imageUrl, { width: 800 })}
               alt={work.title}
-              className="w-full h-auto object-contain transition-transform duration-500 group-hover:scale-105"
-              loading="lazy" // <-- Добавляем ленивую загрузку
-              width="800" // <-- Помогаем браузеру, указывая реальные размеры (если известны)
-              height="600" // <-- Это можно убрать, если пропорции разные
+              className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105" // изменил object-contain на object-cover
+              loading="lazy"
+              // Убрал width и height, так как aspect-ratio лучше задавать контейнеру, если нужно
             />
-            {/* ---------------------------------------------------- */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
           <div className="p-4">
             <h3 className="text-lg font-semibold mb-2">{work.title}</h3>
@@ -47,12 +43,12 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
               {work.description}
             </p>
             <div className="flex flex-wrap gap-1">
-              {work.tags.slice(0, 3).map((tag) => (
+              {work.tags && work.tags.slice(0, 3).map((tag) => (
                 <Chip key={tag} size="sm" variant="flat" color="primary" className="text-xs">
                   {tag}
                 </Chip>
               ))}
-              {work.tags.length > 3 && (
+              {work.tags && work.tags.length > 3 && (
                 <Chip size="sm" variant="flat" color="default" className="text-xs">
                   +{work.tags.length - 3}
                 </Chip>
