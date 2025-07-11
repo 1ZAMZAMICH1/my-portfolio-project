@@ -23,7 +23,6 @@ const WorksPage: React.FC = () => {
       setLoading(true);
       try {
         const categoryWorks = await getWorksByCategory(category as any);
-        // Сортируем по полю 'order'
         categoryWorks.sort((a, b) => (a.order || 0) - (b.order || 0));
         setWorks(categoryWorks);
       } catch (error) {
