@@ -1,6 +1,10 @@
-# Правило для Single Page Application (SPA)
-# Перехватывает все запросы, которые не ведут к существующим файлам,
-# и отдает вместо них главный index.html
+# Правило для API (ПЕРВОЕ)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# Правило для SPA (ВТОРОЕ)
 [[redirects]]
   from = "/*"
   to = "/index.html"

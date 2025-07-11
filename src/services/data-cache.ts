@@ -12,7 +12,7 @@ let cachedData: DbData | null = null;
 let fetchPromise: Promise<DbData> | null = null;
 
 // Прямой URL нашей функции
-const API_URL = 'https://zamzamich.netlify.app/.netlify/functions/api';
+const API_URL = '/api/'
 
 /**
  * Главная функция для получения данных.
