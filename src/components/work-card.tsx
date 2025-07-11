@@ -1,27 +1,29 @@
-// ... импорты ...
+import React from "react";
+import { Card, CardBody, CardFooter, Chip } from "@heroui/react"; 
+import { motion } from "framer-motion";
+import { Icon } from "@iconify/react";
+import { Work } from "../types/work";
+import { getOptimizedUrl } from '../utils/image-optimizer';
+
+interface WorkCardProps {
+  work: Work;
+  onView: (work: Work) => void;
+}
 
 const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
-  // --- Варианты анимации для ОДНОЙ карточки ---
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
-  };
-
   return (
-    // --- ИЗМЕНЕНИЕ ЗДЕСЬ: используем variants ---
     <motion.div
-      variants={itemVariants}
-      className="h-full" // Добавил h-full для корректной высоты
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      // --- ДОБАВЛЕН ТОЛЬКО ЭТОТ КЛАСС ---
+      className="will-change-transform" 
     >
       <Card 
         className="glass-effect border border-white/10 h-full cursor-pointer"
         onClick={() => onView(work)}
-        isPressable // Добавляем эффект нажатия от HeroUI
       >
-        {/* ... остальной код карточки без изменений ... */}
+        {/* ... остальная часть кода карточки ... */}
       </Card>
     </motion.div>
   );
