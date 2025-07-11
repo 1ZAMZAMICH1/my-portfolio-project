@@ -1,35 +1,47 @@
-// ПОЛНЫЙ КОД для netlify/functions/api.js
-
 export async function handler(event, context) {
   
   const { GIST_ID, GITHUB_TOKEN, GIST_FILENAME } = process.env;
   const GIST_URL = `https://api.github.com/gists/${GIST_ID}`;
-
-  // Заголовки, которые мы будем отправлять в ответе
+  
   const responseHeaders = { 
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*', // Разрешаем CORS для всех
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   };
 
-  // Обработка preflight-запроса от браузера для POST
   if (event.httpMethod === 'OPTIONS') {
     return {
-      statusCode: 204, // No Content
+      statusCode: 204,
       headers: responseHeaders
     };
   }
 
-  // --- ЧТЕНИЕ ДАННЫХ (GET) ---
+  // --- GET ЗАПРОС ТЕПЕРЬ УМНЕЕ ---
   if (event.httpMethod === 'GET') {
     try {
       const response = await fetch(GIST_URL);
       if (!response.ok) throw new Error(`Gist read error: ${response.status}`);
+      
       const gistData = await response.json();
-      const file = gistData.files[GIST_FILENAME];
-      if (!file) throw new Error(`File '${GIST_FILENAME}' not found.`);
-      return { statusCode: 200, headers: responseHeaders, body: file.content };
+      const content = gistData.files[GIST_FILENAME].content;
+      const db = JSON.parse(content);
+
+      // Проверяем, не запрашивают ли одну работу по ID (например, /api/?id=123)
+      const workId = event.queryStringParameters?.id;
+
+      if (workId) {
+        // Если ID есть, ищем и отдаем только одну работу
+        const work = (db.works || []).find(w => w.id === workId);
+        if (work) {
+          return { statusCode: 200, headers: responseHeaders, body: JSON.stringify(work) };
+        } else {
+          return { statusCode: 404, headers: responseHeaders, body: JSON.stringify({ error: "Work not found" }) };
+        }
+      } else {
+        // Если ID нет, отдаем ВСЮ базу, как и раньше
+        return { statusCode: 200, headers: responseHeaders, body: content };
+      }
     } catch (error) {
       return { statusCode: 500, headers: responseHeaders, body: JSON.stringify({ error: error.message }) };
     }

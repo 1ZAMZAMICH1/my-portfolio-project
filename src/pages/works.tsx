@@ -11,7 +11,9 @@ const WorksPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
   const [works, setWorks] = React.useState<Work[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [selectedWork, setSelectedWork] = React.useState<Work | null>(null);
+  
+  // --- ИЗМЕНЕНИЕ ЗДЕСЬ: Храним только ID, а не весь объект ---
+  const [selectedWorkId, setSelectedWorkId] = React.useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   
   const validCategories = ['design', 'websites', 'apps', 'presentations'];
@@ -23,7 +25,6 @@ const WorksPage: React.FC = () => {
       setLoading(true);
       try {
         const categoryWorks = await getWorksByCategory(category as any);
-        categoryWorks.sort((a, b) => (a.order || 0) - (b.order || 0));
         setWorks(categoryWorks);
       } catch (error) {
         console.error("Ошибка при загрузке работ:", error);
@@ -35,13 +36,15 @@ const WorksPage: React.FC = () => {
     loadWorks();
   }, [category]);
   
+  // --- ИЗМЕНЕНИЕ ЗДЕСЬ: Сохраняем ID работы ---
   const handleViewWork = (work: Work) => {
-    setSelectedWork(work);
+    setSelectedWorkId(work.id);
     setIsModalOpen(true);
   };
   
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setSelectedWorkId(null); // Сбрасываем ID
   };
   
   if (!category || !validCategories.includes(category)) {
@@ -50,17 +53,7 @@ const WorksPage: React.FC = () => {
   
   return (
     <div className="container mx-auto py-12 px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-12"
-      >
-        <h1 className="text-3xl font-bold mb-4">{getCategoryName(category as any)}</h1>
-        <p className="text-xl text-foreground/70">
-          Коллекция моих работ в категории {getCategoryName(category as any).toLowerCase()}
-        </p>
-      </motion.div>
+      {/* ... твой заголовок ... */}
       
       {loading ? (
         <div className="flex justify-center items-center py-20">
@@ -74,8 +67,9 @@ const WorksPage: React.FC = () => {
         </div>
       )}
       
+      {/* --- ИЗМЕНЕНИЕ ЗДЕСЬ: Передаем ID в модалку --- */}
       <WorkDetailModal 
-        work={selectedWork} 
+        workId={selectedWorkId} 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
       />
