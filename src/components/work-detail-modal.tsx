@@ -2,7 +2,7 @@ import React from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Chip } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { Work } from "../types/work";
-import ImageLightbox from "./image-lightbox"; 
+import ImageLightbox from "./image-lightbox";
 import { getOptimizedUrl } from "../utils/image-optimizer";
 
 interface WorkDetailModalProps {
@@ -21,17 +21,6 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
     if (!work) return [];
     return [work.imageUrl, ...(work.additionalImages || [])];
   }, [work]);
-
-  React.useEffect(() => {
-    if (isOpen && allImages.length > 1) {
-      allImages.forEach(imgUrl => {
-        if (!imgUrl.endsWith('.webm') && !imgUrl.endsWith('.mp4')) {
-          const img = new Image();
-          img.src = getOptimizedUrl(imgUrl, { width: 1200 });
-        }
-      });
-    }
-  }, [isOpen, allImages]);
 
   React.useEffect(() => {
     if (work) {
@@ -53,12 +42,12 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
   const handlePrevImage = () => {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + allImages.length) % allImages.length);
   };
-
+  
   const openLightbox = () => {
-    // Лайтбокс открываем только для картинок
-    if (!activeImage.endsWith('.webm') && !activeImage.endsWith('.mp4')) {
+    // Открываем лайтбокс только если это не видео
+    if (!activeImage.toLowerCase().endsWith('.webm') && !activeImage.toLowerCase().endsWith('.mp4')) {
       setIsLightboxOpen(true);
-      setLightboxInitialIndex(currentIndex); 
+      setLightboxInitialIndex(currentIndex);
     }
   };
 
@@ -67,35 +56,10 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
   };
   
   if (!work) return null;
-  
-  // --- Функция для рендера медиа (картинка или видео) ---
-  const renderMedia = (url: string, isThumbnail = false) => {
-    const isVideo = url.toLowerCase().endsWith('.webm') || url.toLowerCase().endsWith('.mp4');
-    
-    if (isVideo) {
-      return (
-        <video
-          key={url} // Ключ важен для React, чтобы он перерисовывал видео
-          src={url}
-          className="w-full h-full object-contain"
-          autoPlay
-          loop
-          muted
-          playsInline
-        />
-      );
-    }
-    
-    return (
-      <img 
-        src={getOptimizedUrl(url, { width: isThumbnail ? 200 : 1200 })}
-        alt={work.title}
-        className="w-full h-full object-contain"
-        loading="lazy"
-      />
-    );
-  };
 
+  // --- Простая проверка на видео прямо здесь ---
+  const isVideo = activeImage.toLowerCase().endsWith('.webm') || activeImage.toLowerCase().endsWith('.mp4');
+  
   return (
     <>
       <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
@@ -107,13 +71,25 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
               </ModalHeader>
               <ModalBody className="p-0">
                 <div className="relative">
-                  {/* Теперь при клике открывается лайтбокс только для картинок */}
                   <div 
                     onClick={openLightbox} 
-                    className={`block w-full bg-black ${!activeImage.endsWith('.webm') && !activeImage.endsWith('.mp4') ? 'cursor-zoom-in' : ''}`}
+                    className={`block w-full h-auto ${isVideo ? '' : 'cursor-zoom-in'}`}
                   >
-                    {/* Рендерим основное медиа */}
-                    {renderMedia(activeImage)}
+                    {/* --- УСЛОВНЫЙ РЕНДЕРИНГ ЗДЕСЬ --- */}
+                    {isVideo ? (
+                      <video
+                        src={activeImage}
+                        className="w-full h-auto object-contain rounded-lg shadow-md"
+                        autoPlay loop muted playsInline
+                      />
+                    ) : (
+                      <img 
+                        src={getOptimizedUrl(activeImage, { width: 1200 })} 
+                        alt={work.title}
+                        className="w-full h-auto object-contain rounded-lg shadow-md"
+                        loading="lazy"
+                      />
+                    )}
                   </div>
                   
                   {allImages.length > 1 && (
@@ -129,15 +105,15 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                   
                   {allImages.length > 1 && (
                     <div className="flex flex-wrap gap-2 p-4 border-t border-white/10 overflow-x-auto justify-center">
-                      {allImages.map((mediaUrl, index) => (
-                        <div
+                      {allImages.map((image, index) => (
+                        <img
                           key={index}
-                          className={`w-20 h-20 rounded-md cursor-pointer transition-all duration-200 overflow-hidden ${activeImage === mediaUrl ? 'border-2 border-primary scale-105' : 'border border-transparent'}`}
+                          src={getOptimizedUrl(image, { width: 200 })}
+                          alt={`${work.title} ${index + 1}`}
+                          className={`w-20 h-20 object-cover rounded-md cursor-pointer transition-all duration-200 ${activeImage === image ? 'border-2 border-primary scale-105' : 'border border-transparent'}`}
                           onClick={() => setCurrentIndex(index)}
-                        >
-                          {/* Рендерим миниатюры */}
-                          {renderMedia(mediaUrl, true)}
-                        </div>
+                          loading="lazy"
+                        />
                       ))}
                     </div>
                   )}
@@ -145,7 +121,43 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
 
                 <div className="p-4">
                   <p className="text-foreground/80 text-justify mb-4">{work.description || work.fullDescription}</p>
-                  {/* ... остальная информация о работе ... */}
+                  
+                  {/* ...остальная часть твоего JSX без изменений... */}
+                  {work.tags && work.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {work.tags.map((tag) => (
+                        <Chip key={tag} size="sm" variant="flat" color="primary">
+                          {tag}
+                        </Chip>
+                      ))}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="flex items-center gap-2">
+                      <Icon icon="lucide:calendar" className="text-primary" />
+                      <div>
+                        <p className="text-sm text-foreground/60">Дата</p>
+                        <p>{new Date(work.date).toLocaleDateString('ru-RU')}</p>
+                      </div>
+                    </div>
+                    {work.client && (
+                      <div className="flex items-center gap-2">
+                        <Icon icon="lucide:briefcase" className="text-primary" />
+                        <div>
+                          <p className="text-sm text-foreground/60">Клиент</p>
+                          <p>{work.client}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {work.link && (
+                    <div className="mb-4">
+                      <a href={work.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+                        <Icon icon="lucide:external-link" />
+                        Посмотреть проект
+                      </a>
+                    </div>
+                  )}
                 </div>
               </ModalBody>
               <ModalFooter className="border-t border-white/10">
@@ -158,7 +170,6 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
         </ModalContent>
       </Modal>
 
-      {/* Лайтбокс будет работать только для картинок */}
       <ImageLightbox
         isOpen={isLightboxOpen}
         onClose={closeLightbox}
