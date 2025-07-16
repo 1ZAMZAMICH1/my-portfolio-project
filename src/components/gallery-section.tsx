@@ -32,6 +32,69 @@ const GallerySection: React.FC = () => {
     loadImages();
   }, []);
 
+  // --- УЛУЧШЕННЫЙ ЭФФЕКТ ДЛЯ ИЗМЕРЕНИЯ ВЫСОТЫ ---
+  useEffect(() => {
+    // Если картинок нет или они еще грузятся, ничего не делаем
+    if (loading || allImages.length === 0) return;
+
+    const measureHeights = () => {
+      // Убедимся, что DOM-элементы колонок существуют
+      if (col1Ref.current && col2Ref.current && col3Ref.current) {
+        const newHeights = {
+          col1: col1Ref.current.scrollHeight,
+          col2: col2Ref.current.scrollHeight,
+          col3: col3Ref.current.scrollHeight,
+        };
+        
+        // Обновляем состояние, только если высоты реально изменились,
+        // чтобы избежать лишних перерисовок
+        if (newHeights.col1 !== colHeights.col1 || newHeights.col2 !== colHeights.col2 || newHeights.col3 !== colHeights.col3) {
+          console.log("Высоты колонок изменились, обновляем:", newHeights);
+          setColHeights(newHeights);
+        }
+      }
+    };
+
+    // Запускаем первое измерение с небольшой задержкой после загрузки данных
+    const initialTimeout = setTimeout(measureHeights, 100);
+
+    // Добавляем слушатель на изменение размера окна, чтобы пересчитать высоту, если что-то поменялось
+    window.addEventListener('resize', measureHeights);
+    
+    // Также можно добавить проверку загрузки изображений для надежности
+    const imagesInDOM = Array.from(document.querySelectorAll('#gallery img'));
+    let loadedCount = 0;
+    const totalImages = imagesInDOM.length;
+
+    const onImageLoad = () => {
+        loadedCount++;
+        if (loadedCount >= totalImages) {
+            // Когда все картинки точно загрузились, делаем финальное измерение
+            console.log("Все изображения в DOM загружены, финальное измерение.");
+            measureHeights();
+        }
+    };
+
+    imagesInDOM.forEach(img => {
+        if (img.complete) {
+            onImageLoad();
+        } else {
+            img.addEventListener('load', onImageLoad);
+            img.addEventListener('error', onImageLoad); // Считаем ошибку как "загрузку"
+        }
+    });
+
+    // Очистка при размонтировании компонента
+    return () => {
+      clearTimeout(initialTimeout);
+      window.removeEventListener('resize', measureHeights);
+      imagesInDOM.forEach(img => {
+        img.removeEventListener('load', onImageLoad);
+        img.removeEventListener('error', onImageLoad);
+      });
+    };
+  }, [loading, allImages, colHeights]); // Добавили colHeights в зависимости
+
   const [column1, column2, column3] = useMemo(() => {
     const cols: GalleryImage[][] = [[], [], []];
     allImages.forEach((image, index) => {
@@ -39,48 +102,19 @@ const GallerySection: React.FC = () => {
     });
     return cols;
   }, [allImages]);
-
-  useEffect(() => {
-    if (loading || allImages.length === 0) return;
-    const refs = [col1Ref, col2Ref, col3Ref];
-    const imagesInDOM = refs.flatMap(ref => Array.from(ref.current?.querySelectorAll('img') || []));
-    if (imagesInDOM.length === 0) return;
-    let loadedImagesCount = 0;
-    const checkAllImagesLoaded = () => {
-      loadedImagesCount++;
-      if (loadedImagesCount === imagesInDOM.length) {
-        setColHeights({
-          col1: col1Ref.current?.scrollHeight || 0,
-          col2: col2Ref.current?.scrollHeight || 0,
-          col3: col3Ref.current?.scrollHeight || 0,
-        });
-      }
-    };
-    imagesInDOM.forEach(img => {
-      if (img.complete) {
-        checkAllImagesLoaded();
-      } else {
-        img.addEventListener('load', checkAllImagesLoaded);
-        img.addEventListener('error', checkAllImagesLoaded);
-      }
-    });
-    return () => {
-      imagesInDOM.forEach(img => {
-        img.removeEventListener('load', checkAllImagesLoaded);
-        img.removeEventListener('error', checkAllImagesLoaded);
-      });
-    };
-  }, [loading, allImages]);
-
+  
   const scrollAnimationVariants = (height: number, reverse: boolean) => {
-    if (height === 0) return {};
-    const scrollDistance = height / 5; 
+    // Важно: если высота 0, анимация не должна запускаться
+    if (height === 0) return { animate: { y: 0 } };
+
+    const scrollDistance = height / 5; // Дублируем контент 5 раз
+
     return {
       animate: {
-        y: reverse ? [0, scrollDistance] : [0, -scrollDistance], 
+        y: reverse ? [0, -scrollDistance] : [0, scrollDistance], // Поменял направление для разнообразия
         transition: {
           y: {
-            duration: 50,
+            duration: 40, // Сделаем чуть быстрее
             ease: "linear",
             repeat: Infinity,
             repeatType: "loop",
@@ -104,7 +138,8 @@ const GallerySection: React.FC = () => {
 
   return (
     <section id="gallery" className="py-20 relative overflow-hidden">
-      <div className="container mx-auto px-4">
+      {/* ... остальная часть твоего JSX без изменений ... */}
+       <div className="container mx-auto px-4">
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -115,50 +150,32 @@ const GallerySection: React.FC = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
               <span className="text-gradient">МОЯ</span> <span className="text-white">ГАЛЕРЕЯ</span>
           </h2>
-          <div className="h-1 w-24 bg-red-500 mt-4"></div>
+          <div className="h-1 w-24 bg-red-500 mt-4 mx-auto"></div>
         </motion.h2>
 
         {loading ? (
-          <div className="flex justify-center items-center h-[600px]"><Spinner size="lg" /></div>
+          <div className="flex justify-center items-center py-20"><Spinner size="lg" /></div>
         ) : allImages.length === 0 ? (
           <div className="text-center py-20 text-foreground/70">
             <Icon icon="lucide:image" className="w-16 h-16 mx-auto mb-6 opacity-50" />
-            <p>Галерея пока пуста.</p>
+            <p className="text-lg">Галерея пока пуста.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4 md:gap-8 h-[600px] overflow-hidden">
-            {/* Первая колонка */}
-            <div className="overflow-hidden">
-              <motion.div 
-                ref={col1Ref} 
-                variants={scrollAnimationVariants(colHeights.col1, false)} 
-                animate="animate" 
-                className="flex flex-col gap-4 will-change-transform"
-              >
+          <div className="grid grid-cols-3 gap-4 max-h-[600px] overflow-hidden">
+            <div className="overflow-hidden h-[600px] flex flex-col">
+              <motion.div ref={col1Ref} variants={scrollAnimationVariants(colHeights.col1, false)} animate="animate" className="flex flex-col gap-4">
                 {duplicatedContent(column1, 1)}
               </motion.div>
             </div>
             
-            {/* Вторая колонка */}
-            <div className="overflow-hidden">
-              <motion.div 
-                ref={col2Ref} 
-                variants={scrollAnimationVariants(colHeights.col2, false)} 
-                animate="animate" 
-                className="flex flex-col gap-4 will-change-transform"
-              >
+            <div className="overflow-hidden h-[600px] flex flex-col">
+              <motion.div ref={col2Ref} variants={scrollAnimationVariants(colHeights.col2, true)} animate="animate" className="flex flex-col gap-4">
                 {duplicatedContent(column2, 2)}
               </motion.div>
             </div>
             
-            {/* Третья колонка */}
-            <div className="overflow-hidden">
-              <motion.div 
-                ref={col3Ref} 
-                variants={scrollAnimationVariants(colHeights.col3, false)} 
-                animate="animate" 
-                className="flex flex-col gap-4 will-change-transform"
-              >
+            <div className="overflow-hidden h-[600px] flex flex-col">
+              <motion.div ref={col3Ref} variants={scrollAnimationVariants(colHeights.col3, false)} animate="animate" className="flex flex-col gap-4">
                 {duplicatedContent(column3, 3)}
               </motion.div>
             </div>
@@ -179,7 +196,7 @@ const GallerySection: React.FC = () => {
             color="primary"
             endContent={<Icon icon="lucide:arrow-right" />}
           >
-            Смотреть все работы
+            Смотреть всю галерею
           </Button>
         </motion.div>
       </div>

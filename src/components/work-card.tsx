@@ -1,7 +1,6 @@
 import React from "react";
-import { Card, CardBody, CardFooter, Chip } from "@heroui/react"; 
+import { Card, CardBody, Chip } from "@heroui/react"; 
 import { motion } from "framer-motion";
-import { Icon } from "@iconify/react";
 import { Work } from "../types/work";
 import { getOptimizedUrl } from '../utils/image-optimizer';
 
@@ -11,8 +10,8 @@ interface WorkCardProps {
 }
 
 const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
-  // --- НАШЕ ИЗМЕНЕНИЕ: ПРОВЕРЯЕМ, ЯВЛЯЕТСЯ ЛИ URL ГИФКОЙ ---
-  const isGif = work.imageUrl.toLowerCase().endsWith('.gif');
+  // Проверяем, является ли URL видеофайлом (webm или mp4)
+  const isVideo = work.imageUrl.toLowerCase().endsWith('.webm') || work.imageUrl.toLowerCase().endsWith('.mp4');
 
   return (
     <motion.div
@@ -28,18 +27,25 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
       >
         <CardBody className="p-0">
           <div className="relative group aspect-[4/3]">
-            <img 
-              // --- ИСПОЛЬЗУЕМ НОВУЮ ЛОГИКУ ---
-              // Если это гифка, форсируем формат 'gif', чтобы получить анимацию.
-              // Если нет - стандартная оптимизация.
-              src={getOptimizedUrl(work.imageUrl, { 
-                width: 800, 
-                forceFormat: isGif ? 'gif' : undefined 
-              })}
-              alt={work.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
-            />
+            {/* --- НАШЕ ГЛАВНОЕ ИЗМЕНЕНИЕ --- */}
+            {isVideo ? (
+              <video
+                src={work.imageUrl} // Для видео оптимизация Cloudinary делается иначе, пока оставим прямой URL
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                autoPlay
+                loop
+                muted
+                playsInline // Важно для автопроигрывания на мобильных, особенно на iOS
+              />
+            ) : (
+              <img 
+                src={getOptimizedUrl(work.imageUrl, { width: 800 })}
+                alt={work.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+              />
+            )}
+            {/* --- КОНЕЦ ИЗМЕНЕНИЯ --- */}
           </div>
           <div className="p-4">
             <h3 className="font-bold text-lg mb-2">{work.title}</h3>
