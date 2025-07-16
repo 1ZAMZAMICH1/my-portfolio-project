@@ -163,7 +163,7 @@ const GallerySection: React.FC = () => {
         ) : (
           <div className="grid grid-cols-3 gap-4 max-h-[600px] overflow-hidden">
             <div className="overflow-hidden h-[600px] flex flex-col">
-              <motion.div ref={col1Ref} variants={scrollAnimationVariants(colHeights.col1, false)} animate="animate" className="flex flex-col gap-4">
+              <motion.div ref={col1Ref} variants={scrollAnimationVariants(colHeights.col1, true)} animate="animate" className="flex flex-col gap-4">
                 {duplicatedContent(column1, 1)}
               </motion.div>
             </div>
@@ -175,7 +175,7 @@ const GallerySection: React.FC = () => {
             </div>
             
             <div className="overflow-hidden h-[600px] flex flex-col">
-              <motion.div ref={col3Ref} variants={scrollAnimationVariants(colHeights.col3, false)} animate="animate" className="flex flex-col gap-4">
+              <motion.div ref={col3Ref} variants={scrollAnimationVariants(colHeights.col3, true)} animate="animate" className="flex flex-col gap-4">
                 {duplicatedContent(column3, 3)}
               </motion.div>
             </div>
