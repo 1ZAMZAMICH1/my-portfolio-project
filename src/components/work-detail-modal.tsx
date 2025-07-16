@@ -3,7 +3,9 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Chip 
 import { Icon } from "@iconify/react";
 import { Work } from "../types/work";
 import ImageLightbox from "./image-lightbox";
-import { getOptimizedUrl } from "../utils/image-optimizer";
+
+// ВАЖНО: Убедись, что эта функция у тебя есть в проекте и путь к ней верный
+import { getOptimizedUrl } from "../utils/image-optimizer"; 
 
 interface WorkDetailModalProps {
   work: Work | null;
@@ -19,7 +21,11 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
 
   const allImages = React.useMemo(() => {
     if (!work) return [];
-    return [work.imageUrl, ...(work.additionalImages || [])];
+    const images = [work.imageUrl];
+    if (work.additionalImages) {
+      images.push(...work.additionalImages);
+    }
+    return images;
   }, [work]);
 
   React.useEffect(() => {
@@ -42,12 +48,11 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
   const handlePrevImage = () => {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + allImages.length) % allImages.length);
   };
-  
+
   const openLightbox = () => {
-    // Открываем лайтбокс только если это не видео
     if (!activeImage.toLowerCase().endsWith('.webm') && !activeImage.toLowerCase().endsWith('.mp4')) {
       setIsLightboxOpen(true);
-      setLightboxInitialIndex(currentIndex);
+      setLightboxInitialIndex(currentIndex); 
     }
   };
 
@@ -56,7 +61,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
   };
   
   if (!work) return null;
-
+  
   // --- Простая проверка на видео прямо здесь ---
   const isVideo = activeImage.toLowerCase().endsWith('.webm') || activeImage.toLowerCase().endsWith('.mp4');
   
@@ -73,18 +78,21 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                 <div className="relative">
                   <div 
                     onClick={openLightbox} 
-                    className={`block w-full h-auto ${isVideo ? '' : 'cursor-zoom-in'}`}
+                    className={`block w-full h-auto ${!isVideo ? 'cursor-zoom-in' : ''}`}
                   >
-                    {/* --- УСЛОВНЫЙ РЕНДЕРИНГ ЗДЕСЬ --- */}
+                    {/* --- ВОТ ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ --- */}
                     {isVideo ? (
                       <video
                         src={activeImage}
                         className="w-full h-auto object-contain rounded-lg shadow-md"
-                        autoPlay loop muted playsInline
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
                       />
                     ) : (
                       <img 
-                        src={getOptimizedUrl(activeImage, { width: 1200 })} 
+                        src={getOptimizedUrl(activeImage, { width: 1200 })}
                         alt={work.title}
                         className="w-full h-auto object-contain rounded-lg shadow-md"
                         loading="lazy"
@@ -120,18 +128,17 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                 </div>
 
                 <div className="p-4">
-                  <p className="text-foreground/80 text-justify mb-4">{work.description || work.fullDescription}</p>
-                  
-                  {/* ...остальная часть твоего JSX без изменений... */}
+                  {/* ИСПРАВЛЕНА ОШИБКА С ОПИСАНИЕМ */}
+                  <p className="text-foreground/80 text-justify mb-4 whitespace-pre-wrap">{work.description || work.fullDescription}</p>
+
                   {work.tags && work.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {work.tags.map((tag) => (
-                        <Chip key={tag} size="sm" variant="flat" color="primary">
-                          {tag}
-                        </Chip>
+                        <Chip key={tag} size="sm" variant="flat" color="primary">{tag}</Chip>
                       ))}
                     </div>
                   )}
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div className="flex items-center gap-2">
                       <Icon icon="lucide:calendar" className="text-primary" />
@@ -150,6 +157,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                       </div>
                     )}
                   </div>
+                  
                   {work.link && (
                     <div className="mb-4">
                       <a href={work.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
