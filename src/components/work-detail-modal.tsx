@@ -1,47 +1,79 @@
-import React from "react";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from "@heroui/react";
+import React, { useState, useEffect } from "react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Spinner } from "@heroui/react";
 import { Work } from "../types/work";
+// Нам понадобится сервис для загрузки одной работы
+import { getWorkById } from "../services/work-service"; 
 
-// Определяем, какие пропсы принимает наш компонент
 interface WorkDetailModalProps {
-  work: Work | null; // Может быть работа, а может быть null
-  isOpen: boolean;    // Открыто или закрыто
-  onClose: () => void;  // Функция, которая вызывается при закрытии
+  workId: string | null; // <-- ПРИНИМАЕМ ID, А НЕ ОБЪЕКТ
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose }) => {
-  // Если нам не передали работу (work === null), то мы вообще ничего не рисуем.
-  // Это самая надежная защита.
-  if (!work) {
+const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ workId, isOpen, onClose }) => {
+  const [work, setWork] = useState<Work | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Этот useEffect будет срабатывать, когда модалка открывается (т.е. когда workId меняется с null на строку)
+  useEffect(() => {
+    // Если нет ID, ничего не делаем
+    if (!workId) {
+      return;
+    }
+    
+    const fetchWork = async () => {
+      setLoading(true);
+      try {
+        // Загружаем данные ОДНОЙ работы по ее ID
+        const fetchedWork = await getWorkById(workId);
+        if (fetchedWork) {
+          setWork(fetchedWork);
+        } else {
+          console.error(`Работа с ID ${workId} не найдена.`);
+          onClose(); // Закрываем модалку, если работа не найдена
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки детальной информации о работе:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWork();
+  }, [workId]); // Зависимость от workId
+
+  // Если модалка не открыта, ничего не рендерим
+  if (!isOpen) {
     return null;
   }
-
-  // Если работа есть, рисуем модалку
+  
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose}
-      size="2xl"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl">
       <ModalContent>
-        {/* Это просто обертка, которую требует HeroUI */}
         {(onCloseCallback) => (
           <>
             <ModalHeader>
-              {/* Просто показываем заголовок работы */}
-              {work.title}
+              {loading ? "Загрузка..." : work?.title}
             </ModalHeader>
             <ModalBody>
-              {/* Просто показываем картинку */}
-              <img 
-                src={work.imageUrl} 
-                alt={work.title}
-                className="w-full h-auto rounded-lg"
-              />
-              {/* Просто показываем описание */}
-              <p className="mt-4 whitespace-pre-wrap">
-                {work.description}
-              </p>
+              {loading ? (
+                <div className="flex justify-center items-center h-48">
+                  <Spinner />
+                </div>
+              ) : work ? (
+                <>
+                  <img 
+                    src={work.imageUrl} 
+                    alt={work.title}
+                    className="w-full h-auto rounded-lg"
+                  />
+                  <p className="mt-4 whitespace-pre-wrap">
+                    {work.description}
+                  </p>
+                </>
+              ) : (
+                <p>Не удалось загрузить данные о работе.</p>
+              )}
             </ModalBody>
             <ModalFooter>
               <Button onPress={onCloseCallback}>
