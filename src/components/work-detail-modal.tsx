@@ -1,11 +1,11 @@
+// src/components/work-detail-modal.tsx
+
 import React from "react";
+// Удалили Link из импорта, так как он больше не нужен для открытия изображения
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Chip } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { Work } from "../types/work";
-import ImageLightbox from "./image-lightbox";
-
-// ВАЖНО: Убедись, что эта функция у тебя есть в проекте и путь к ней верный
-import { getOptimizedUrl } from "../utils/image-optimizer"; 
+import ImageLightbox from "./image-lightbox"; // <-- Импортируем новый компонент
 
 interface WorkDetailModalProps {
   work: Work | null;
@@ -16,9 +16,12 @@ interface WorkDetailModalProps {
 const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose }) => {
   const [activeImage, setActiveImage] = React.useState<string>("");
   const [currentIndex, setCurrentIndex] = React.useState<number>(0);
+
+  // Состояния для ImageLightbox
   const [isLightboxOpen, setIsLightboxOpen] = React.useState(false);
   const [lightboxInitialIndex, setLightboxInitialIndex] = React.useState(0);
 
+  // Все доступные изображения для галереи (включая основное)
   const allImages = React.useMemo(() => {
     if (!work) return [];
     const images = [work.imageUrl];
@@ -28,6 +31,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
     return images;
   }, [work]);
 
+  // Сброс активного изображения и индекса при открытии новой работы
   React.useEffect(() => {
     if (work) {
       setActiveImage(work.imageUrl);
@@ -35,6 +39,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
     }
   }, [work]);
 
+  // Обновляем activeImage при изменении currentIndex
   React.useEffect(() => {
     if (allImages.length > 0) {
       setActiveImage(allImages[currentIndex]);
@@ -49,11 +54,11 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
     setCurrentIndex((prevIndex) => (prevIndex - 1 + allImages.length) % allImages.length);
   };
 
+  // Функция для открытия лайтбокса
   const openLightbox = () => {
-    if (!activeImage.toLowerCase().endsWith('.webm') && !activeImage.toLowerCase().endsWith('.mp4')) {
-      setIsLightboxOpen(true);
-      setLightboxInitialIndex(currentIndex); 
-    }
+    setIsLightboxOpen(true);
+    // Когда открываем лайтбокс, убедимся, что он показывает текущее активное изображение
+    setLightboxInitialIndex(currentIndex); 
   };
 
   const closeLightbox = () => {
@@ -62,12 +67,14 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
   
   if (!work) return null;
   
-  // --- Простая проверка на видео прямо здесь ---
-  const isVideo = activeImage.toLowerCase().endsWith('.webm') || activeImage.toLowerCase().endsWith('.mp4');
-  
   return (
-    <>
-      <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
+    <> {/* Используем фрагмент для рендеринга двух модальных окон */}
+      <Modal 
+        isOpen={isOpen} 
+        onClose={onClose}
+        size="2xl"
+        scrollBehavior="inside"
+      >
         <ModalContent>
           {(onCloseFromModalContent) => (
             <>
@@ -76,51 +83,52 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
               </ModalHeader>
               <ModalBody className="p-0">
                 <div className="relative">
+                  {/* Теперь при клике на изображение открывается лайтбокс */}
                   <div 
                     onClick={openLightbox} 
-                    className={`block w-full h-auto ${!isVideo ? 'cursor-zoom-in' : ''}`}
+                    className="block w-full h-auto cursor-zoom-in"
                   >
-                    {/* --- ВОТ ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ --- */}
-                    {isVideo ? (
-                      <video
-                        src={activeImage}
-                        className="w-full h-auto object-contain rounded-lg shadow-md"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                      />
-                    ) : (
-                      <img 
-                        src={getOptimizedUrl(activeImage, { width: 1200 })}
-                        alt={work.title}
-                        className="w-full h-auto object-contain rounded-lg shadow-md"
-                        loading="lazy"
-                      />
-                    )}
+                    <img 
+                      src={activeImage} 
+                      alt={work.title}
+                      className="w-full h-auto object-contain rounded-lg shadow-md"
+                    />
                   </div>
                   
+                  {/* Кнопки пролистывания */}
                   {allImages.length > 1 && (
                     <>
-                      <Button isIconOnly variant="light" onClick={handlePrevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 z-10 rounded-full" aria-label="Предыдущее изображение">
+                      <Button 
+                        isIconOnly 
+                        variant="light" 
+                        onClick={handlePrevImage} 
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 z-10 rounded-full"
+                        aria-label="Предыдущее изображение"
+                      >
                         <Icon icon="lucide:chevron-left" className="w-6 h-6" />
                       </Button>
-                      <Button isIconOnly variant="light" onClick={handleNextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 z-10 rounded-full" aria-label="Следующее изображение">
+                      <Button 
+                        isIconOnly 
+                        variant="light" 
+                        onClick={handleNextImage} 
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white hover:bg-black/70 z-10 rounded-full"
+                        aria-label="Следующее изображение"
+                      >
                         <Icon icon="lucide:chevron-right" className="w-6 h-6" />
                       </Button>
                     </>
                   )}
                   
+                  {/* Галерея миниатюр, если есть дополнительные изображения */}
                   {allImages.length > 1 && (
                     <div className="flex flex-wrap gap-2 p-4 border-t border-white/10 overflow-x-auto justify-center">
                       {allImages.map((image, index) => (
                         <img
                           key={index}
-                          src={getOptimizedUrl(image, { width: 200 })}
+                          src={image}
                           alt={`${work.title} ${index + 1}`}
                           className={`w-20 h-20 object-cover rounded-md cursor-pointer transition-all duration-200 ${activeImage === image ? 'border-2 border-primary scale-105' : 'border border-transparent'}`}
                           onClick={() => setCurrentIndex(index)}
-                          loading="lazy"
                         />
                       ))}
                     </div>
@@ -128,13 +136,14 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                 </div>
 
                 <div className="p-4">
-                  {/* ИСПРАВЛЕНА ОШИБКА С ОПИСАНИЕМ */}
-                  <p className="text-foreground/80 text-justify mb-4 whitespace-pre-wrap">{work.description || work.fullDescription}</p>
+                  <p className="text-foreground/80 text-justify mb-4">{work.fullDescription}</p>
 
                   {work.tags && work.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {work.tags.map((tag) => (
-                        <Chip key={tag} size="sm" variant="flat" color="primary">{tag}</Chip>
+                        <Chip key={tag} size="sm" variant="flat" color="primary">
+                          {tag}
+                        </Chip>
                       ))}
                     </div>
                   )}
@@ -147,6 +156,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                         <p>{new Date(work.date).toLocaleDateString('ru-RU')}</p>
                       </div>
                     </div>
+                    
                     {work.client && (
                       <div className="flex items-center gap-2">
                         <Icon icon="lucide:briefcase" className="text-primary" />
@@ -160,7 +170,12 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                   
                   {work.link && (
                     <div className="mb-4">
-                      <a href={work.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+                      <a // Changed back to <a> tag from Heroui Link, as we are not using HeroUI Link here.
+                        href={work.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-primary hover:underline"
+                      >
                         <Icon icon="lucide:external-link" />
                         Посмотреть проект
                       </a>
@@ -178,10 +193,11 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
         </ModalContent>
       </Modal>
 
+      {/* Компонент лайтбокса */}
       <ImageLightbox
         isOpen={isLightboxOpen}
         onClose={closeLightbox}
-        images={allImages.filter(url => !url.endsWith('.webm') && !url.endsWith('.mp4')).map(img => getOptimizedUrl(img, { width: 1920 }))}
+        images={allImages}
         initialIndex={lightboxInitialIndex}
       />
     </>
