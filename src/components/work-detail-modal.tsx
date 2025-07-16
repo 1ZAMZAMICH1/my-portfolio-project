@@ -1,14 +1,19 @@
 // src/components/work-detail-modal.tsx
 
 import React from "react";
-// Удалили Link из импорта, так как он больше не нужен для открытия изображения
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Chip } from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { Work } from "../types/work";
 import ImageLightbox from "./image-lightbox"; // <-- Импортируем новый компонент
 
+// Упрости тип work для теста либо оставь как есть, если файл types доступен
+// import { Work } from "../types/work";
+// interface WorkDetailModalProps {
+//   work: Work | null;
+//   isOpen: boolean;
+//   onClose: () => void;
+// }
 interface WorkDetailModalProps {
-  work: Work | null;
+  work: any; // чтоб не споткнуться на типах если тестируешь
   isOpen: boolean;
   onClose: () => void;
 }
@@ -33,7 +38,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
 
   // Сброс активного изображения и индекса при открытии новой работы
   React.useEffect(() => {
-    if (work) {
+    if (work && work.imageUrl) {
       setActiveImage(work.imageUrl);
       setCurrentIndex(0);
     }
@@ -57,16 +62,32 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
   // Функция для открытия лайтбокса
   const openLightbox = () => {
     setIsLightboxOpen(true);
-    // Когда открываем лайтбокс, убедимся, что он показывает текущее активное изображение
     setLightboxInitialIndex(currentIndex); 
   };
 
   const closeLightbox = () => {
     setIsLightboxOpen(false);
   };
-  
-  if (!work) return null;
-  
+
+  // ==== Изменено! (Для теста модалки Комментируем строгую проверку) ====  
+  // if (!work) return null; 
+  // Вместо возврата null — покажи что-то
+  if (!work) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalContent>
+          <ModalHeader>Нет данных о работе</ModalHeader>
+          <ModalBody>work отсутствует</ModalBody>
+          <ModalFooter>
+            <Button color="default" onPress={onClose}>Закрыть</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    );
+  }
+  // ==== Конец изменения ====
+
+
   return (
     <> {/* Используем фрагмент для рендеринга двух модальных окон */}
       <Modal 
@@ -83,7 +104,6 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
               </ModalHeader>
               <ModalBody className="p-0">
                 <div className="relative">
-                  {/* Теперь при клике на изображение открывается лайтбокс */}
                   <div 
                     onClick={openLightbox} 
                     className="block w-full h-auto cursor-zoom-in"
@@ -94,7 +114,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                       className="w-full h-auto object-contain rounded-lg shadow-md"
                     />
                   </div>
-                  
+
                   {/* Кнопки пролистывания */}
                   {allImages.length > 1 && (
                     <>
@@ -118,8 +138,8 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
                       </Button>
                     </>
                   )}
-                  
-                  {/* Галерея миниатюр, если есть дополнительные изображения */}
+
+                  {/* Галерея миниатюр */}
                   {allImages.length > 1 && (
                     <div className="flex flex-wrap gap-2 p-4 border-t border-white/10 overflow-x-auto justify-center">
                       {allImages.map((image, index) => (
@@ -140,68 +160,73 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ work, isOpen, onClose
 
                   {work.tags && work.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {work.tags.map((tag) => (
+                      {work.tags.map((tag: string) => (
                         <Chip key={tag} size="sm" variant="flat" color="primary">
-                          {tag}
-                        </Chip>
-                      ))}
+                        {tag}
+                      </Chip>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="flex items-center gap-2">
+                    <Icon icon="lucide:calendar" className="text-primary" />
+                    <div>
+                      <p className="text-sm text-foreground/60">Дата</p>
+                      <p>
+                        {work.date
+                          ? new Date(work.date).toLocaleDateString("ru-RU")
+                          : "—"}
+                      </p>
                     </div>
-                  )}
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="flex items-center gap-2">
-                      <Icon icon="lucide:calendar" className="text-primary" />
-                      <div>
-                        <p className="text-sm text-foreground/60">Дата</p>
-                        <p>{new Date(work.date).toLocaleDateString('ru-RU')}</p>
-                      </div>
-                    </div>
-                    
-                    {work.client && (
-                      <div className="flex items-center gap-2">
-                        <Icon icon="lucide:briefcase" className="text-primary" />
-                        <div>
-                          <p className="text-sm text-foreground/60">Клиент</p>
-                          <p>{work.client}</p>
-                        </div>
-                      </div>
-                    )}
                   </div>
                   
-                  {work.link && (
-                    <div className="mb-4">
-                      <a // Changed back to <a> tag from Heroui Link, as we are not using HeroUI Link here.
-                        href={work.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-primary hover:underline"
-                      >
-                        <Icon icon="lucide:external-link" />
-                        Посмотреть проект
-                      </a>
+                  {work.client && (
+                    <div className="flex items-center gap-2">
+                      <Icon icon="lucide:briefcase" className="text-primary" />
+                      <div>
+                        <p className="text-sm text-foreground/60">Клиент</p>
+                        <p>{work.client}</p>
+                      </div>
                     </div>
                   )}
                 </div>
-              </ModalBody>
-              <ModalFooter className="border-t border-white/10">
-                <Button color="default" variant="light" onPress={onClose}>
-                  Закрыть
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+                
+                {work.link && (
+                  <div className="mb-4">
+                    <a
+                      href={work.link}
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-primary hover:underline"
+                    >
+                      <Icon icon="lucide:external-link" />
+                      Посмотреть проект
+                    </a>
+                  </div>
+                )}
+              </div>
+            </ModalBody>
+            <ModalFooter className="border-t border-white/10">
+              <Button color="default" variant="light" onPress={onClose}>
+                Закрыть
+              </Button>
+            </ModalFooter>
+          </>
+        )}
+      </ModalContent>
+    </Modal>
 
-      {/* Компонент лайтбокса */}
-      <ImageLightbox
-        isOpen={isLightboxOpen}
-        onClose={closeLightbox}
-        images={allImages}
-        initialIndex={lightboxInitialIndex}
-      />
-    </>
-  );
+    {/* Компонент лайтбокса */}
+    <ImageLightbox
+      isOpen={isLightboxOpen}
+      onClose={closeLightbox}
+      images={allImages}
+      initialIndex={lightboxInitialIndex}
+    />
+  </>
+);
 };
 
 export default WorkDetailModal;
+
