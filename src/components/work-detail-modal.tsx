@@ -16,11 +16,9 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ workId, isOpen, onClo
   const [work, setWork] = useState<Work | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Состояния для галереи внутри модалки
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  // Загружаем данные о работе, когда модалка открывается
   useEffect(() => {
     if (isOpen && workId) {
       setLoading(true);
@@ -37,13 +35,11 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ workId, isOpen, onClo
       };
       fetchWork();
     } else {
-      // Сбрасываем состояние при закрытии
       setWork(null);
       setCurrentIndex(0);
     }
   }, [isOpen, workId]);
 
-  // Собираем все картинки в один массив
   const allImages = useMemo(() => {
     if (!work) return [];
     return [work.imageUrl, ...(work.additionalImages || [])];
@@ -51,13 +47,19 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ workId, isOpen, onClo
   
   const activeImage = allImages[currentIndex] || "";
 
-  // Функции для переключения
   const handleNextImage = () => setCurrentIndex((prev) => (prev + 1) % allImages.length);
   const handlePrevImage = () => setCurrentIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
-  const openLightbox = () => setIsLightboxOpen(true);
+  
+  const openLightbox = () => {
+    if (!activeImage.toLowerCase().endsWith('.webm') && !activeImage.toLowerCase().endsWith('.mp4')) {
+      setIsLightboxOpen(true);
+    }
+  };
   const closeLightbox = () => setIsLightboxOpen(false);
 
   if (!isOpen) return null;
+
+  const isVideo = (url: string) => url.toLowerCase().endsWith('.webm') || url.toLowerCase().endsWith('.mp4');
 
   return (
     <>
@@ -74,8 +76,13 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ workId, isOpen, onClo
                 ) : work ? (
                   <>
                     <div className="relative mb-4">
-                      <div onClick={openLightbox} className="cursor-zoom-in">
-                        <img src={getOptimizedUrl(activeImage, { width: 1200 })} alt={work.title} className="w-full h-auto object-contain rounded-lg"/>
+                      <div onClick={openLightbox} className={`w-full h-auto ${!isVideo(activeImage) ? 'cursor-zoom-in' : ''}`}>
+                        {/* --- УСЛОВНЫЙ РЕНДЕРИНГ ОСНОВНОГО МЕДИА --- */}
+                        {isVideo(activeImage) ? (
+                          <video src={activeImage} className="w-full h-auto object-contain rounded-lg" autoPlay loop muted playsInline key={activeImage} />
+                        ) : (
+                          <img src={getOptimizedUrl(activeImage, { width: 1200 })} alt={work.title} className="w-full h-auto object-contain rounded-lg" loading="lazy" />
+                        )}
                       </div>
                       {allImages.length > 1 && (
                         <>
@@ -87,9 +94,14 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ workId, isOpen, onClo
 
                     {allImages.length > 1 && (
                       <div className="flex flex-wrap gap-2 justify-center mb-4">
-                        {allImages.map((img, index) => (
-                          <div key={index} className={`w-20 h-20 rounded-md cursor-pointer overflow-hidden ${index === currentIndex ? 'border-2 border-primary' : ''}`} onClick={() => setCurrentIndex(index)}>
-                            <img src={getOptimizedUrl(img, { width: 200 })} alt={`thumbnail ${index + 1}`} className="w-full h-full object-cover"/>
+                        {allImages.map((imgUrl, index) => (
+                          <div key={index} className={`w-20 h-20 rounded-md cursor-pointer overflow-hidden bg-content1 ${index === currentIndex ? 'border-2 border-primary' : ''}`} onClick={() => setCurrentIndex(index)}>
+                            {/* --- УСЛОВНЫЙ РЕНДЕРИНГ МИНИАТЮР --- */}
+                            {isVideo(imgUrl) ? (
+                                <video src={imgUrl} className="w-full h-full object-cover" muted playsInline />
+                            ) : (
+                                <img src={getOptimizedUrl(imgUrl, { width: 200 })} alt={`thumbnail ${index + 1}`} className="w-full h-full object-cover" loading="lazy"/>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -145,7 +157,7 @@ const WorkDetailModal: React.FC<WorkDetailModalProps> = ({ workId, isOpen, onClo
       <ImageLightbox
         isOpen={isLightboxOpen}
         onClose={closeLightbox}
-        images={allImages.map(img => getOptimizedUrl(img, { width: 1920 }))}
+        images={allImages.filter(url => !isVideo(url)).map(img => getOptimizedUrl(img, { width: 1920 }))}
         initialIndex={currentIndex}
       />
     </>

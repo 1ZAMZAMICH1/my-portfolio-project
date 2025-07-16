@@ -10,6 +10,10 @@ interface WorkCardProps {
 }
 
 const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
+  // Проверяем, является ли URL видеофайлом (webm или mp4) или гифкой
+  const isVideo = work.imageUrl.toLowerCase().endsWith('.webm') || work.imageUrl.toLowerCase().endsWith('.mp4');
+  const isGif = work.imageUrl.toLowerCase().endsWith('.gif');
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -24,12 +28,28 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
       >
         <CardBody className="p-0">
           <div className="relative group aspect-[4/3]">
-            <img 
-              src={getOptimizedUrl(work.imageUrl, { width: 800 })}
-              alt={work.title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
-            />
+            {/* Условный рендеринг: показываем видео или картинку */}
+            {isVideo ? (
+              <video
+                src={work.imageUrl} // Для видео используем прямой URL
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                autoPlay
+                loop
+                muted
+                playsInline
+              />
+            ) : (
+              <img 
+                // Если это гифка, форсируем формат 'gif', иначе стандартная оптимизация
+                src={getOptimizedUrl(work.imageUrl, { 
+                  width: 800, 
+                  forceFormat: isGif ? 'gif' : undefined 
+                })}
+                alt={work.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+              />
+            )}
           </div>
           <div className="p-4">
             <h3 className="font-bold text-lg mb-2">{work.title}</h3>
