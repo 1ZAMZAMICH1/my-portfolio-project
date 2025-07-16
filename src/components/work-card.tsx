@@ -11,12 +11,15 @@ interface WorkCardProps {
 }
 
 const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
+  // --- НАШЕ ИЗМЕНЕНИЕ: ПРОВЕРЯЕМ, ЯВЛЯЕТСЯ ЛИ URL ГИФКОЙ ---
+  const isGif = work.imageUrl.toLowerCase().endsWith('.gif');
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="h-full" // Добавляем h-full, чтобы карточка занимала всю высоту
+      className="h-full"
     >
       <Card 
         isPressable
@@ -24,9 +27,15 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, onView }) => {
         className="glass-effect border border-white/10 h-full overflow-hidden"
       >
         <CardBody className="p-0">
-          <div className="relative group aspect-[4/3]"> {/* Задаем соотношение сторон */}
+          <div className="relative group aspect-[4/3]">
             <img 
-              src={getOptimizedUrl(work.imageUrl, { width: 800 })}
+              // --- ИСПОЛЬЗУЕМ НОВУЮ ЛОГИКУ ---
+              // Если это гифка, форсируем формат 'gif', чтобы получить анимацию.
+              // Если нет - стандартная оптимизация.
+              src={getOptimizedUrl(work.imageUrl, { 
+                width: 800, 
+                forceFormat: isGif ? 'gif' : undefined 
+              })}
               alt={work.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
